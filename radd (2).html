@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radd — رد</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0c;
+  --surface:#141417;
+  --surface-2:#1c1c20;
+  --input-bg:#232327;
+  --border:#2a2a2f;
+  --text:#f4f2f0;
+  --text-soft:#9d9aa2;
+  --text-faint:#6b6871;
+  --rose:#ff5c8a;
+  --rose-dim:#c94a70;
+  --rose-glow:rgba(255,92,138,0.35);
+  --gold:#e8c99a;
+  --radius-lg:22px;
+  --radius-md:14px;
+  --radius-sm:9px;
+  --font-ar:'Cairo',sans-serif;
+  --font-serif:'Fraunces',serif;
+}
+:root[data-theme="light"]{
+  --bg:#f7f4f1; --surface:#ffffff; --surface-2:#f0ece8; --input-bg:#eeeae5;
+  --border:#e2ddd6; --text:#211f22; --text-soft:#6d6870; --text-faint:#a19ca4;
+  --rose-glow:rgba(255,92,138,0.22);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{min-height:100%;}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--font-ar);
+  overflow-x:hidden; -webkit-font-smoothing:antialiased;
+  -webkit-overflow-scrolling:touch;
+}
+::selection{background:var(--rose); color:#fff;}
+button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit;}
+input,textarea{font-family:inherit; color:inherit;}
+a{color:inherit;}
+.scroll-thin::-webkit-scrollbar{width:6px; height:6px;}
+.scroll-thin::-webkit-scrollbar-thumb{background:var(--border); border-radius:10px;}
+
+/* ---------- App shell ---------- */
+#app{display:flex; min-height:100vh; width:100%;}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width:266px; flex-shrink:0; background:var(--surface);
+  border-left:1px solid var(--border); display:flex; flex-direction:column;
+  padding:20px 16px; height:100vh; position:sticky; top:0; overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  transition:transform .3s ease;
+}
+.brand{display:flex; align-items:center; gap:10px; padding:6px 8px 22px 8px;}
+.sidebar-close{display:none; margin-inline-start:auto; width:34px; height:34px; border-radius:10px; align-items:center; justify-content:center; color:var(--text-soft); background:var(--surface-2); flex-shrink:0;}
+.sidebar-close:hover{color:var(--rose);}
+.brand-mark{
+  width:34px; height:34px; border-radius:10px;
+  background:radial-gradient(circle at 30% 30%, var(--rose), var(--rose-dim));
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  box-shadow:0 0 22px var(--rose-glow);
+}
+.brand-name{font-family:var(--font-serif); font-size:21px; font-weight:600; letter-spacing:.2px;}
+.brand-sub{font-size:11px; color:var(--text-faint); margin-top:-2px;}
+
+.new-conv-btn{
+  display:flex; align-items:center; gap:10px; width:100%;
+  background:var(--surface-2); border:1px solid var(--border);
+  border-radius:var(--radius-md); padding:11px 14px; font-size:14px; font-weight:600;
+  margin-bottom:22px; transition:background .15s, border-color .15s;
+}
+.new-conv-btn:hover{background:var(--input-bg); border-color:var(--rose-dim);}
+
+.nav-section{margin-bottom:6px;}
+.nav-label{font-size:11px; color:var(--text-faint); padding:6px 10px; letter-spacing:.3px;}
+.nav-item{
+  display:flex; align-items:center; gap:11px; width:100%; padding:10px 10px;
+  border-radius:var(--radius-sm); font-size:14px; color:var(--text-soft);
+  transition:background .15s, color .15s;
+}
+.nav-item:hover{background:var(--surface-2); color:var(--text);}
+.nav-item.active{background:var(--surface-2); color:var(--text);}
+.nav-item svg{flex-shrink:0; opacity:.85;}
+.nav-item .chev{margin-inline-start:auto; transition:transform .2s;}
+.nav-item.open .chev{transform:rotate(90deg);}
+
+.nav-sub{overflow:hidden; max-height:0; transition:max-height .25s ease;}
+.nav-sub.open{max-height:260px;}
+.nav-sub-item{
+  display:flex; align-items:center; gap:9px; padding:8px 10px 8px 34px;
+  font-size:13px; color:var(--text-faint); border-radius:var(--radius-sm);
+}
+.nav-sub-item:hover{color:var(--text); background:var(--surface-2);}
+
+.conv-list{max-height:0; overflow:hidden; transition:max-height .25s ease;}
+.conv-list.open{max-height:200px;}
+.conv-list-item{
+  padding:8px 10px 8px 34px; font-size:12.5px; color:var(--text-faint);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; border-radius:var(--radius-sm);
+}
+.conv-list-item:hover{color:var(--text); background:var(--surface-2);}
+
+.sidebar-spacer{flex:1;}
+.sidebar-bottom{border-top:1px solid var(--border); padding-top:10px; margin-top:10px;}
+
+/* ---------- Mobile sidebar toggle ---------- */
+.hamburger{
+  display:none; position:fixed; top:16px; right:16px; z-index:40;
+  width:42px; height:42px; border-radius:12px; background:var(--surface);
+  border:1px solid var(--border); align-items:center; justify-content:center;
+}
+.sidebar-backdrop{display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:45;}
+
+/* ---------- Main ---------- */
+.main{flex:1; min-width:0; min-height:100vh; position:relative;}
+.view{display:none; width:100%;}
+.view.active{display:block;}
+
+/* ---------- Home view ---------- */
+.home-wrap{
+  min-height:100vh; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; padding:40px 24px; position:relative;
+}
+.home-inner{width:100%; max-width:660px; display:flex; flex-direction:column; align-items:center; text-align:center;}
+
+.hero-glow-row{display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:18px;}
+.spark{width:46px; height:46px; position:relative; flex-shrink:0;}
+.spark svg{width:100%; height:100%; filter:drop-shadow(0 0 12px var(--rose-glow)); animation:pulse 2.6s ease-in-out infinite;}
+@keyframes pulse{
+  0%,100%{ filter:drop-shadow(0 0 8px var(--rose-glow)); opacity:.88; transform:scale(1);}
+  50%{ filter:drop-shadow(0 0 22px var(--rose-glow)); opacity:1; transform:scale(1.06);}
+}
+.hero-heading{font-family:var(--font-serif); font-size:clamp(30px,5vw,44px); font-weight:500; line-height:1.15;}
+.hero-sub{color:var(--text-soft); font-size:15px; margin-top:12px; max-width:430px;}
+
+.lang-switch{display:flex; gap:6px; background:var(--surface-2); padding:4px; border-radius:100px; margin:26px 0 22px 0; border:1px solid var(--border);}
+.lang-pill{padding:7px 16px; border-radius:100px; font-size:13px; font-weight:600; color:var(--text-faint); transition:.15s;}
+.lang-pill.active{background:var(--rose); color:#1a0a10;}
+
+.upload-box{
+  width:100%; background:var(--input-bg); border:1.5px dashed var(--border);
+  border-radius:var(--radius-lg); padding:22px; transition:border-color .2s, background .2s;
+}
+.upload-box.drag-over{border-color:var(--rose); background:var(--surface-2);}
+.upload-box.has-content{border-style:solid;}
+
+.upload-preview{display:none; align-items:center; gap:12px; background:var(--surface); border-radius:var(--radius-md); padding:10px 12px; margin-bottom:14px; border:1px solid var(--border);}
+.upload-preview.show{display:flex;}
+.upload-preview img{width:44px; height:44px; border-radius:9px; object-fit:cover;}
+.upload-preview .info{flex:1; text-align:right; font-size:13px; color:var(--text-soft); overflow:hidden;}
+.upload-preview .info strong{color:var(--text); display:block; font-size:13.5px;}
+.upload-preview button{color:var(--text-faint); padding:6px;}
+.upload-preview button:hover{color:var(--rose);}
+
+.upload-row{display:flex; align-items:flex-end; gap:10px;}
+.upload-textarea{
+  flex:1; background:transparent; border:none; outline:none; resize:none;
+  color:var(--text); font-size:15px; line-height:1.5; min-height:26px; max-height:120px;
+  font-family:inherit;
+}
+.upload-textarea::placeholder{color:var(--text-faint);}
+.upload-icon-btn{
+  width:40px; height:40px; border-radius:11px; background:var(--surface); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center; color:var(--text-soft); flex-shrink:0; transition:.15s;
+}
+.upload-icon-btn:hover{color:var(--rose); border-color:var(--rose-dim);}
+.submit-btn{
+  width:40px; height:40px; border-radius:11px; background:var(--rose); flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; color:#1a0a10; transition:.15s;
+}
+.submit-btn:hover{transform:scale(1.06); box-shadow:0 0 18px var(--rose-glow);}
+.submit-btn:disabled{opacity:.4; pointer-events:none;}
+
+.context-field{
+  width:100%; background:transparent; border:none; outline:none; color:var(--text-soft);
+  font-size:13px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);
+}
+.context-field::placeholder{color:var(--text-faint);}
+
+.hidden-file-input{display:none;}
+
+.home-foot-row{display:flex; align-items:center; justify-content:center; gap:18px; margin-top:18px;}
+.safety-note{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-faint);}
+.demo-link{font-size:12px; color:var(--text-faint); text-decoration:underline; text-underline-offset:3px;}
+.demo-link:hover{color:var(--rose);}
+
+/* ---------- Loading overlay ---------- */
+.loading-overlay{
+  position:fixed; inset:0; background:rgba(10,10,12,.86); backdrop-filter:blur(6px);
+  z-index:80; display:none; align-items:center; justify-content:center; flex-direction:column;
+}
+.loading-overlay.show{display:flex;}
+.loading-spark{width:64px; height:64px; margin-bottom:22px;}
+.loading-spark svg{width:100%; height:100%; animation:spin 1.8s linear infinite, pulse 2.2s ease-in-out infinite;}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+.loading-text{font-size:15px; color:var(--text-soft); min-height:20px;}
+
+/* ---------- Blocked / safety refusal ---------- */
+.blocked-card{
+  width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:26px; margin-top:16px; text-align:right; display:flex; gap:14px; align-items:flex-start;
+}
+.blocked-icon{width:38px; height:38px; border-radius:11px; background:rgba(255,92,138,.12); color:var(--rose); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.blocked-title{font-weight:700; font-size:15px; margin-bottom:5px;}
+.blocked-body{font-size:13.5px; color:var(--text-soft); line-height:1.7;}
+
+/* ---------- Results view ---------- */
+.results-wrap{max-width:920px; margin:0 auto; padding:36px 28px 80px 28px;}
+.results-top{display:flex; align-items:center; gap:14px; margin-bottom:22px;}
+.back-btn{width:38px; height:38px; border-radius:11px; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-soft); flex-shrink:0;}
+.back-btn:hover{color:var(--rose);}
+.results-thumb{width:52px; height:52px; border-radius:13px; object-fit:cover; border:1px solid var(--border); flex-shrink:0;}
+.results-thumb.placeholder{background:var(--surface-2); display:flex; align-items:center; justify-content:center; color:var(--text-faint);}
+.results-heading{font-family:var(--font-serif); font-size:26px; font-weight:500;}
+.results-source{font-size:12.5px; color:var(--text-faint); margin-top:2px;}
+
+.insight-box{
+  display:flex; gap:11px; align-items:flex-start; background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-md); padding:14px 16px; margin-bottom:26px;
+}
+.insight-box svg{color:var(--rose); flex-shrink:0; margin-top:2px;}
+.insight-box p{font-size:13.5px; color:var(--text-soft); line-height:1.7;}
+
+.tabs{display:flex; gap:8px; margin-bottom:22px; border-bottom:1px solid var(--border); padding-bottom:0;}
+.tab{
+  padding:10px 6px; font-size:14.5px; font-weight:600; color:var(--text-faint);
+  border-bottom:2px solid transparent; margin-bottom:-1px; display:flex; align-items:center; gap:7px;
+  transition:color .15s, border-color .15s;
+}
+.tab:hover{color:var(--text-soft);}
+.tab.active{color:var(--text); border-color:var(--rose);}
+.tab-desc{font-size:13px; color:var(--text-faint); margin-bottom:20px; line-height:1.6;}
+
+.cards-grid{display:flex; flex-direction:column; gap:12px;}
+.reply-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md);
+  padding:18px 18px; transition:border-color .15s, transform .15s;
+}
+.reply-card:hover{border-color:#3a3a41;}
+.reply-text{font-size:15.5px; line-height:1.85; margin-bottom:14px;}
+.reply-actions{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.pill-btn{
+  display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-soft);
+  background:var(--surface-2); border:1px solid var(--border); border-radius:100px; padding:7px 12px;
+  transition:.15s;
+}
+.pill-btn:hover{color:var(--text); border-color:var(--rose-dim);}
+.pill-btn.copied{color:var(--rose); border-color:var(--rose-dim);}
+.chip-toggle{margin-inline-start:auto;}
+.chips-row{display:flex; gap:7px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px dashed var(--border); display:none;}
+.chips-row.open{display:flex;}
+.chip{font-size:12px; color:var(--text-faint); background:var(--input-bg); border:1px solid var(--border); border-radius:100px; padding:6px 11px; transition:.15s;}
+.chip:hover{color:var(--rose); border-color:var(--rose-dim);}
+
+/* ---------- Learning skills views ---------- */
+.lesson-wrap{max-width:760px; margin:0 auto; padding:36px 28px 90px 28px;}
+.lesson-eyebrow{color:var(--rose); font-size:13px; font-weight:700; margin-bottom:8px;}
+.lesson-title{font-family:var(--font-serif); font-size:30px; font-weight:500; margin-bottom:8px;}
+.lesson-meta{color:var(--text-faint); font-size:13px; margin-bottom:30px;}
+.lesson-block{margin-bottom:26px;}
+.lesson-block h3{font-size:14.5px; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:8px;}
+.lesson-block p, .lesson-block li{font-size:14.5px; color:var(--text-soft); line-height:1.85;}
+.lesson-block ul{padding-inline-start:20px;}
+.example-pair{display:flex; flex-direction:column; gap:10px; margin-top:6px;}
+.example-line{border-radius:var(--radius-sm); padding:12px 14px; font-size:14px; display:flex; gap:10px; align-items:flex-start;}
+.example-line.bad{background:rgba(255,92,138,.06); border:1px solid rgba(255,92,138,.22);}
+.example-line.good{background:rgba(120,200,150,.06); border:1px solid rgba(120,200,150,.22);}
+.example-tag{font-size:11px; font-weight:800; letter-spacing:.3px; flex-shrink:0; padding-top:1px;}
+.example-line.bad .example-tag{color:#ff7f9c;}
+.example-line.good .example-tag{color:#7fd39c;}
+.lang-example{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; font-size:14px; margin-top:8px;}
+.lang-example .lbl{font-size:11px; color:var(--text-faint); margin-bottom:5px;}
+.challenge-box{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px; margin-top:8px;}
+.practice-btn{
+  display:flex; align-items:center; gap:9px; background:var(--rose); color:#1a0a10; font-weight:700;
+  padding:12px 22px; border-radius:100px; font-size:14px; margin-top:30px;
+}
+.practice-btn:hover{box-shadow:0 0 18px var(--rose-glow);}
+
+/* ---------- Practice view ---------- */
+.practice-scenario{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px; margin-bottom:18px; font-size:14.5px; line-height:1.8; color:var(--text-soft);}
+.practice-input-row{display:flex; gap:10px; align-items:flex-end;}
+.practice-textarea{
+  flex:1; background:var(--input-bg); border:1px solid var(--border); border-radius:var(--radius-md);
+  padding:13px 15px; font-size:14.5px; color:var(--text); resize:none; min-height:56px; outline:none; font-family:inherit;
+}
+.practice-textarea:focus{border-color:var(--rose-dim);}
+.practice-feedback{margin-top:22px; display:none; flex-direction:column; gap:10px;}
+.practice-feedback.show{display:flex;}
+.feedback-row{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px;}
+.feedback-label{font-size:13px; font-weight:700; width:88px; flex-shrink:0;}
+.feedback-bar-track{flex:1; height:6px; background:var(--input-bg); border-radius:10px; overflow:hidden;}
+.feedback-bar-fill{height:100%; background:var(--rose); border-radius:10px; transition:width .5s ease;}
+.feedback-note{font-size:12.5px; color:var(--text-faint); width:150px; flex-shrink:0; text-align:left;}
+
+/* ---------- Settings panel ---------- */
+.settings-wrap{max-width:560px; margin:0 auto; padding:36px 28px 80px 28px;}
+.settings-group{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:6px; margin-bottom:16px;}
+.settings-row{display:flex; align-items:center; justify-content:space-between; padding:14px 14px; border-bottom:1px solid var(--border);}
+.settings-row:last-child{border-bottom:none;}
+.settings-row-label{font-size:14px; font-weight:600;}
+.settings-row-desc{font-size:12.5px; color:var(--text-faint); margin-top:2px;}
+.toggle{width:42px; height:24px; border-radius:100px; background:var(--input-bg); border:1px solid var(--border); position:relative; flex-shrink:0; transition:.2s;}
+.toggle.on{background:var(--rose); border-color:var(--rose);}
+.toggle::after{content:''; position:absolute; top:2px; inset-inline-start:2px; width:18px; height:18px; border-radius:50%; background:#fff; transition:.2s;}
+.toggle.on::after{inset-inline-start:20px;}
+
+/* ---------- Responsive ---------- */
+@media (max-width:880px){
+  .sidebar{position:fixed; z-index:55; transform:translateX(100%); right:0; top:0; height:100vh; box-shadow:-10px 0 40px rgba(0,0,0,.4); background:var(--surface) !important;}
+  .sidebar.open{transform:translateX(0);}
+  .hamburger{display:flex;}
+  .sidebar-close{display:flex;}
+  .sidebar-backdrop.show{display:block;}
+  .main{width:100%;}
+  .home-wrap{padding:80px 18px 40px 18px;}
+  .results-wrap{padding:80px 16px 60px 16px;}
+  .lesson-wrap{padding:80px 16px 60px 16px;}
+  .settings-wrap{padding:80px 16px 60px 16px;}
+  .tabs{overflow-x:auto;}
+  .feedback-note{display:none;}
+}
+</style>
+</head>
+<body>
+
+<button class="hamburger" id="hamburgerBtn" aria-label="فتح القائمة">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+<div id="app">
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.2 9.2L21 12L14.2 14.8L12 22L9.8 14.8L3 12L9.8 9.2L12 2Z" fill="#1a0a10"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">Radd</div>
+        <div class="brand-sub">رَدّ · كل كلمة ليها معنى</div>
+      </div>
+      <button class="sidebar-close" id="sidebarCloseBtn" aria-label="قفل القائمة">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <button class="new-conv-btn" data-nav="home">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      محادثة جديدة
+    </button>
+
+    <div class="nav-section">
+      <button class="nav-item" id="myConvBtn">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        محادثاتي
+        <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <div class="conv-list" id="myConvList">
+        <div class="conv-list-item">مريم — بروفايل انستجرام</div>
+        <div class="conv-list-item">دردشة Bumble — أمس</div>
+        <div class="conv-list-item">هبة — أول رسالة</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <button class="nav-item" id="savedBtn">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        ردود محفوظة
+        <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <div class="conv-list" id="savedList">
+        <div class="conv-list-item">"واضح إن ورا الصورة دي حكاية..."</div>
+        <div class="conv-list-item">"لفت نظري إنك بتحبي السفر..."</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <button class="nav-item" id="learningBtn">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        مهارات التواصل
+        <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <div class="nav-sub" id="learningSub">
+        <button class="nav-sub-item" data-lesson="listening">الاستماع الفعّال</button>
+        <button class="nav-sub-item" data-lesson="confidence">الثقة في الكلام</button>
+        <button class="nav-sub-item" data-lesson="cues">قراءة الإشارات</button>
+        <button class="nav-sub-item" data-lesson="questions">أسئلة أذكى</button>
+      </div>
+    </div>
+
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-bottom">
+      <button class="nav-item" data-nav="settings">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        الإعدادات
+      </button>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <main class="main" id="main">
+
+    <!-- ---------- HOME VIEW ---------- -->
+    <section class="view active" id="view-home">
+      <div class="home-wrap">
+        <div class="home-inner">
+          <div class="hero-glow-row">
+            <div class="spark">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L14.2 9.2L21 12L14.2 14.8L12 22L9.8 14.8L3 12L9.8 9.2L12 2Z" fill="url(#g1)"/>
+                <defs><radialGradient id="g1" cx="50%" cy="35%" r="70%"><stop offset="0%" stop-color="#ffb3c8"/><stop offset="100%" stop-color="#ff5c8a"/></radialGradient></defs>
+              </svg>
+            </div>
+            <h1 class="hero-heading">يلا نشتغل</h1>
+          </div>
+          <p class="hero-sub">ابعت سكرين شات، بروفايل، أو بايو — وأنا أساعدك تلاقي أنسب رد.</p>
+
+          <div class="lang-switch" id="langSwitch">
+            <button class="lang-pill active" data-lang="masri">مصري</button>
+            <button class="lang-pill" data-lang="franco">Franco</button>
+            <button class="lang-pill" data-lang="mix">Mix</button>
+          </div>
+
+          <div class="upload-box" id="uploadBox">
+            <div class="upload-preview" id="uploadPreview">
+              <img id="uploadPreviewImg" src="" alt="">
+              <div class="info"><strong id="uploadPreviewName">screenshot.png</strong>هنحلل الصورة دي</div>
+              <button id="removeUpload" aria-label="مسح">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div class="upload-row">
+              <button class="upload-icon-btn" id="imgBtn" title="ارفع صورة">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              </button>
+              <textarea class="upload-textarea" id="mainInput" rows="1" placeholder="حط سكرين شات، بروفايل، بايو، أو قولّي إيه اللي حاصل..."></textarea>
+              <button class="submit-btn" id="submitBtn" disabled title="هات ردود">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              </button>
+            </div>
+            <input type="text" class="context-field" id="contextField" placeholder="حاجة تانية أعرفها؟ زي: مردتش عليا من يومين، أو اتقابلنا امبارح بس...">
+          </div>
+          <input type="file" accept="image/*" class="hidden-file-input" id="fileInput">
+
+          <div class="home-foot-row">
+            <div class="safety-note">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></svg>
+              مبيعالجش صور +18 ولا بيولّد كلام جنسي
+            </div>
+            <button class="demo-link" id="demoUnsafeLink">جرّب مثال محتوى ممنوع</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- BLOCKED VIEW ---------- -->
+    <section class="view" id="view-blocked">
+      <div class="home-wrap">
+        <div class="home-inner">
+          <div class="hero-glow-row">
+            <div class="spark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L14.2 9.2L21 12L14.2 14.8L12 22L9.8 14.8L3 12L9.8 9.2L12 2Z" fill="url(#g2)"/><defs><radialGradient id="g2" cx="50%" cy="35%" r="70%"><stop offset="0%" stop-color="#ffb3c8"/><stop offset="100%" stop-color="#ff5c8a"/></radialGradient></defs></svg></div>
+            <h1 class="hero-heading">مقدرش أساعد بده</h1>
+          </div>
+          <div class="blocked-card">
+            <div class="blocked-icon">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16.5" x2="12.01" y2="16.5"/></svg>
+            </div>
+            <div>
+              <div class="blocked-title">الصورة دي معندهاش محتوى ينفع نحلله</div>
+              <div class="blocked-body">
+                Radd مصمم يساعدك تبدأ أو تكمّل كلام محترم — مش بيعالج صور فيها محتوى جنسي أو محتوى +18، ومش بيولّد ردود جنسية تحت أي تصنيف.
+                <br><br>
+                جرّب ترفع سكرين شات من محادثة، أو بروفايل، أو بايو، وهنكمل من هناك.
+              </div>
+            </div>
+          </div>
+          <button class="new-conv-btn" style="max-width:220px; margin-top:22px;" data-nav="home">ارجع للبداية</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- RESULTS VIEW ---------- -->
+    <section class="view" id="view-results">
+      <div class="results-wrap">
+        <div class="results-top">
+          <button class="back-btn" data-nav="home">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" transform="rotate(180 12 12)"/></svg>
+          </button>
+          <div class="results-thumb placeholder" id="resultsThumb">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          </div>
+          <div>
+            <div class="results-heading">هقولك أرد بإيه</div>
+            <div class="results-source" id="resultsSource">بناءً على المحادثة اللي بعتّها</div>
+          </div>
+        </div>
+
+        <div class="insight-box">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L14.2 9.2L21 12L14.2 14.8L12 22L9.8 14.8L3 12L9.8 9.2L12 2Z"/></svg>
+          <p id="insightText">الشات فيه روح خفيفة ومرح، تقدر تفتح بفلتة بسيطة من غير ما تكون مبالغ فيها.</p>
+        </div>
+
+        <div class="tabs" id="resultTabs">
+          <button class="tab active" data-cat="flirty">🌹 فلرت</button>
+          <button class="tab" data-cat="sophisticated">🥂 شخصية جذابة</button>
+          <button class="tab" data-cat="respectable">🤍 محترم</button>
+        </div>
+        <p class="tab-desc" id="tabDesc">مرح وواثق، فيه غنج خفيف من غير ما يوصل لحاجة محرجة أو زيادة عن اللازم.</p>
+
+        <div class="cards-grid" id="cardsGrid"></div>
+      </div>
+    </section>
+
+    <!-- ---------- LESSON VIEW ---------- -->
+    <section class="view" id="view-lesson">
+      <div class="lesson-wrap" id="lessonContent"></div>
+    </section>
+
+    <!-- ---------- PRACTICE VIEW ---------- -->
+    <section class="view" id="view-practice">
+      <div class="lesson-wrap">
+        <div class="lesson-eyebrow" id="practiceEyebrow">تدريب مع الذكاء الاصطناعي</div>
+        <h1 class="lesson-title" id="practiceTitle">جرّب بنفسك</h1>
+        <div class="practice-scenario" id="practiceScenario"></div>
+
+        <div class="practice-input-row">
+          <textarea class="practice-textarea" id="practiceInput" placeholder="اكتب ردك هنا..."></textarea>
+          <button class="submit-btn" id="practiceSubmit" style="width:56px; height:56px; border-radius:14px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </button>
+        </div>
+
+        <div class="practice-feedback" id="practiceFeedback">
+          <div class="feedback-row"><div class="feedback-label">الاستماع</div><div class="feedback-bar-track"><div class="feedback-bar-fill" id="fbListening"></div></div><div class="feedback-note" id="fbListeningNote"></div></div>
+          <div class="feedback-row"><div class="feedback-label">الثقة</div><div class="feedback-bar-track"><div class="feedback-bar-fill" id="fbConfidence"></div></div><div class="feedback-note" id="fbConfidenceNote"></div></div>
+          <div class="feedback-row"><div class="feedback-label">الطبيعية</div><div class="feedback-bar-track"><div class="feedback-bar-fill" id="fbNatural"></div></div><div class="feedback-note" id="fbNaturalNote"></div></div>
+          <div class="feedback-row"><div class="feedback-label">الاحترام</div><div class="feedback-bar-track"><div class="feedback-bar-fill" id="fbRespect"></div></div><div class="feedback-note" id="fbRespectNote"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- SETTINGS VIEW ---------- -->
+    <section class="view" id="view-settings">
+      <div class="settings-wrap">
+        <h1 class="lesson-title" style="margin-bottom:24px;">الإعدادات</h1>
+
+        <div class="settings-group">
+          <div class="settings-row">
+            <div><div class="settings-row-label">اللغة الافتراضية</div><div class="settings-row-desc">اللهجة اللي هتظهر بيها الردود جديد كل مرة</div></div>
+            <div style="font-size:13px; color:var(--text-soft);" id="settingsLangLabel">مصري</div>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-row-label">الوضع الفاتح</div><div class="settings-row-desc">تبديل بين الوضع الداكن والفاتح</div></div>
+            <button class="toggle" id="themeToggle"></button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-row">
+            <div><div class="settings-row-label">حفظ المحادثات تلقائيًا</div><div class="settings-row-desc">يفضل يحتفظ بالردود اللي اتولّدت في السايد بار</div></div>
+            <button class="toggle on" id="autosaveToggle"></button>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-row-label">إيموجي في الردود</div><div class="settings-row-desc">إظهار إيموجي في الردود المقترحة لما يكون مناسب</div></div>
+            <button class="toggle on" id="emojiToggle"></button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-row" style="align-items:flex-start;">
+            <div style="display:flex; gap:10px;">
+              <svg width="17" height="17" style="margin-top:2px; color:var(--rose); flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></svg>
+              <div><div class="settings-row-label">حماية المحتوى</div><div class="settings-row-desc">Radd ما بيقبلش صور +18 أو محتوى جنسي، وما بيولّدش ردود جنسية أو مسيئة تحت أي تصنيف — حتى تصنيف "فلرت". ده جزء ثابت من التطبيق ومش قابل للتعطيل.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L14.2 9.2L21 12L14.2 14.8L12 22L9.8 14.8L3 12L9.8 9.2L12 2Z" fill="url(#g3)"/><defs><radialGradient id="g3" cx="50%" cy="35%" r="70%"><stop offset="0%" stop-color="#ffb3c8"/><stop offset="100%" stop-color="#ff5c8a"/></radialGradient></defs></svg></div>
+  <div class="loading-text" id="loadingText">بنقرا الموقف...</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============ DATA ============ */
+  // Base fallback lines (used when nothing specific is detected in the input,
+  // and always blended in a little for variety).
+  var GENERIC_FULL = {
+    masri:{
+      flirty:[
+        "لأ بجد كده مش هينفع، في حاجة في اللي بعتّه لازم أعرفها 😏",
+        "من إمتى وأنا بتفرج على الكلام ده زي فيلم قصير 😌",
+        "خلاص قررت، لازم أعرف الحكاية كاملة النهاردة مش بكرة",
+        "طب سؤال قبل أي حاجة... اتصور/كتب إمتى بالظبط ده؟",
+        "مش هقدر أسيبها كده من غير ما أسأل، إيه القصة؟",
+        "في حاجة شدّتني هنا، وأنا مش بحب أسيب الحاجات دي من غير سؤال"
+      ],
+      sophisticated:[
+        "واضح إن ورا اللي بعتّه حكاية.. إيه القصة؟",
+        "بصراحة نادر إن حاجة تخليني أفكر قبل ما أرد",
+        "عندي إحساس إن الكلام ده مش هيكون عادي، نجرب؟",
+        "بحب الناس اللي عندها زاوية مختلفة، وده اللي حاسسه هنا",
+        "مش كل يوم بلاقي حاجة تستاهل وقفة، ودي كانت وحدة منهم",
+        "في تفصيلة صغيرة هنا لفتت نظري أكتر من الباقي"
+      ],
+      respectable:[
+        "حابب أتعرف عليكي أكتر لو الموضوع مناسبلك",
+        "لفت نظري تفصيلة صغيرة، ممكن تحكيلي عنها أكتر؟",
+        "حسيت إن في حاجة حقيقية هنا مش مجرد كلام عادي",
+        "لو عندك وقت، حابب أسمع الحكاية كاملة",
+        "في حاجة عجبتني هنا، وحابب أفهمها أكتر منك مباشرة",
+        "الكلام ده لفت نظري فعلاً، ممكن تفاصيل أكتر؟"
+      ]
+    },
+    franco:{
+      flirty:[
+        "la2 keda msh hay nfa3, feeh 7aga lazem a3rafha 😏",
+        "msh ha2dar aroo7 gowaya, feeh 7aga hena lazem a3rafha",
+        "2arrart, lazem a3raf el 2essa kamla el nahar dah msh bokra",
+        "quick question... da kan emta bel zabt?",
+        "msh hasebha keda from 3ala2ta, eh el 2essa?",
+        "feeh 7aga hena shaddetni, w ana msh bحب اسيبها من غير سؤال"
+      ],
+      sophisticated:[
+        "wade7 en fi story wara el kalam dah, eh el mawdoo3?",
+        "bصراحة nader en 7aga tخليني afaker abl ma ارد",
+        "3andy she3or en el kalam dah msh hayb2a ordinary, net jarab؟",
+        "bحب الناس اللي عندها angle مختلفة، وده اللي 7ases beeh hena",
+        "msh kol youm ala2y 7aga testahel وقفة، w di kanet wa7da منهم",
+        "feeh detail sagheera hena lفتت نظري أكتر من الباقي"
+      ],
+      respectable:[
+        "7abeit a3rafek aktar law el mawdoo3 monaseb",
+        "lafet nazary detail sagheera, momken te7keily 3anha aktar?",
+        "7aseit en feeh 7aga real hena msh mojarad kalam 3ady",
+        "law 3andak wa2t, 7abeit asma3 el 2essa kamla",
+        "feeh 7aga 3agebetny hena, w 7abeit afhamha aktar menak/menek",
+        "el kalam dah lafet nazary fe3lan, momken tafaseel aktar?"
+      ]
+    },
+    mix:{
+      flirty:[
+        "ok but fi el kalam dee fi story لازم أعرفها 😂",
+        "not gonna lie الفايب بتاعك مختلف شوية",
+        "quick question... إيه القصة وراء ده؟",
+        "من يومين وأنا مفكر أبعتلك رسالة، خلاص جالي courage 😂"
+      ],
+      sophisticated:[
+        "honestly مش بحب أرد بسرعة، بس ده كان الاستثناء",
+        "عندي إحساس إن الكلام ده مش هيبقى ordinary",
+        "واضح إن في story وراه، share it؟",
+        "بحب الناس اللي عندها own opinion، وده اللي حاسسه هنا"
+      ],
+      respectable:[
+        "noticed تفصيلة صغيرة، what's the story behind it؟",
+        "حابب أتعرف عليكي أكتر لو الموضوع مناسبلك",
+        "feeh 7aga حقيقية هنا مش مجرد small talk",
+        "لو عندك وقت، حابب أسمع الحكاية كاملة"
+      ]
+    }
+  };
+
+  // Short opener fragments keyed by a detected topic in the user's input/context.
+  var TOPIC_HOOKS = {
+    travel:{ masri:["لاحظت إنك بتحب/ي السفر","شكل صور السفر حلوة أوي","باين عليك بتحب/ي تتنقل كتير"],
+              franco:["shaklek 3ash e2 el safar","el soar bta3et el re7lat 7elwa awy","wade7 enak/enek bt7eb el trips"] },
+    coffee:{ masri:["لاحظت إنك بتحب/ي القهوة","شكلك من عشاق الكافيهات"],
+              franco:["shaklek min mo7ebeen el coffee","wa2e3 keda bt2ade el wa2t fel cafes"] },
+    food:{ masri:["باين عليك بتحب/ي تجرب/ي أكل جديد","شكل صور الأكل عندك بتفتح النفس"],
+            franco:["shaklek bt7eb tejarab akl gedeed","el soar bta3et el akl 3andek tefta7 el nafs"] },
+    gym:{ masri:["واضح إنك بتاخد الرياضة بجد","شكلك ملتزم بالجيم"],
+           franco:["wade7 enak/enek betakhod el gym gad","shaklek committed fel tamreen"] },
+    work:{ masri:["شكل شغلك حاجة مختلفة","باين إنك شغال/ة في حاجة تستاهل تتحكي"],
+            franco:["shakl el shoghl bta3ak/betak mo5talef","wa2e3 keda 3andak career interesting"] },
+    pets:{ masri:["شكل الحيوان الأليف بتاعك قمر","باين إنك بتحب/ي الحيوانات"],
+            franco:["el pet bta3ak/betak 2amar","shaklek 7anin ma3a el animals"] },
+    music:{ masri:["ذوقك في الموسيقى لفت نظري","شكلك بتسمع/ي حاجات مختلفة"],
+             franco:["dawa2ak fel music lafet nazary","shaklek bеtesma3 7agat different"] },
+    art:{ masri:["في حس فني واضح عندك","شكل شغلك فيه ذوق مختلف"],
+           franco:["feeh 7ess fanny wade7 3andak","el shoghl bta3ak feeh ta3m"] }
+  };
+  var TOPIC_PATTERNS = {
+    travel:/سفر|رحل|طيران|مطار|اسطنبول|دبي|لندن|شرم|الساحل|travel|trip|safar|re7la|rehla/i,
+    coffee:/قهوة|كافيه|كافي|coffee|2ahwa|cafe/i,
+    food:/أكل|مطعم|طبخ|food|akl|matal/i,
+    gym:/جيم|رياضة|تمرين|جري|gym|workout|tamreen/i,
+    work:/شغل|شغلانة|وظيفة|بيزنس|work|shoghl|job/i,
+    pets:/قطة|قطط|كلب|cat|dog|pet/i,
+    music:/موسيقى|أغاني|أغنية|music|song/i,
+    art:/رسم|فن\b|art|painting|drawing/i
+  };
+
+  // Full standalone lines for two situational cases (not compliments — a tone/behavior fit).
+  var SITUATION_DELAY = {
+    flirty:{ masri:["مش هزعل إن الرد اتأخر، بس هقولك اشتقتلي بجد 😏","خلاص نسيت إني كنت مستني رد... يلا احكيلي أخبارك","معلش تأخير الرد، بس أهو رجعتي/رجعت في وقتك المناسب"],
+              franco:["msh ha z3al en el radd et2akher, bas ashta2telak beg ad 😏","5alas nseet en kont mostana radd... yalla e7kily akhbarek","ma3lesh el ta2kheer, el mohem enty/enta ge3ty/ge3t fel wa2t el monaseb"] },
+    sophisticated:{ masri:["مش هعلّق على التأخير، بس تصدقي عاجبني إنك مش من النوع اللي بيرد على طول","معنديش مشكلة مع الوقت، طالما الرد فيه حاجة تستاهل الانتظار","مكنتش مستعجل الرد، كنت بس فضولي أعرف رأيك"],
+                     franco:["msh ha3le2 3ala el ta2kheer, bas 3ajebny enak/enek msh min el naw3 el bared","ma3andeesh moshkela ma3 el wa2t, tol ma el radd feeh 7aga testa7el","kont curious a3raf ra2yek, msh mohem el mawa3eed"] },
+    respectable:{ masri:["ولا يهمك، الوقت مش مشكلة، المهم إنك بخير","خد/ي وقتك، أنا كنت بس عايز أطمن عليك","مفيش أي ضغط خالص، رد لما يكون عندك وقت فاضي"],
+                   franco:["wala yhemek, el wa2t msh moshkela, el mohem enty/enta bekheir","5od/y wa2tek, ana kont bas 3ayez atman","mafeesh ay dagt, radd lama yeb2a 3andek wa2t"] }
+  };
+  var SITUATION_MET = {
+    flirty:{ masri:["من ساعة ما اتقابلنا وأنا لسه فاكر تفصيلة صغيرة قولتها","بصراحة النهاردة مكنتش زي ما توقعت... كنت أحلى","لسه فاكر ضحكتك من امبارح، عايز أشوفك تاني"],
+              franco:["men sa3et ma et2abalna w ana lesa faker tafseela sagheera 2oltaha","bصراحة el nahar dah mkontesh zay ma twa2a3t... kont a7la","lesa faker de7ketak/de7ketek men embare7, 3ayez ashoofak/ashoofek tany"] },
+    sophisticated:{ masri:["اللقاء النهاردة خلاني أفكر فيه بجد","نادر إن حد يترك انطباع زي ده من أول لقاء","بعد الكلام اللي دار بينا، حابب أكمل الموضوع"],
+                    franco:["el le2a2 el nahar dah khalany afaker feeh beg ad","nader en 7ad yeseb impression zay dah men awel le2a2","ba3d el kalam elly dar beinena, 7abeit akammel"] },
+    respectable:{ masri:["كان لطيف جدًا إننا اتقابلنا، حابب نكمل الكلام لو تحب/ي","استمتعت بالوقت اللي قضيناه، تحب/ي نتقابل تاني؟","شكرًا على وقتك النهاردة، عجبني كلامنا"],
+                  franco:["kan lateef en et2abalna, 7abeit nkamel el kalam law te7eb/y","estamta3t bel wa2t elly 2adenah, te7eb/y net2abel tany?","shokran 3ala wa2tek el nahar dah, 3agebny kalamna"] }
+  };
+  var CATEGORY_TAILS = {
+    flirty:{ masri:["، لازم أعرف التفاصيل 😏","، إيه القصة الكاملة بقى؟","، خلاص قررت أسألك على طول"],
+              franco:["، lazem a3raf el tafaseel 😏","، eh el 2essa el kamla؟","، 2arrart as2alak 3ala tool"] },
+    sophisticated:{ masri:["، وده خلاني حابب أعرف أكتر","، ونادر إن حاجة تلفت نظري كده","، وعندي فضول أعرف الحكاية"],
+                    franco:["، w da khalany 7abeit a3raf aktar","، w nader en 7aga tلفت نظري keda","، w 3andy curiosity a3raf el tafaseel"] },
+    respectable:{ masri:["، إيه أكتر حاجة بتحبها في كده؟","، حابب أسمع أكتر عن كده لو تحب/ي","، تحكيلي أكتر عنها؟"],
+                  franco:["، eh akter 7aga betحبها؟","، 7abeit asma3 aktar law te7eb/y","، te7keily aktar 3anha؟"] }
+  };
+  var MIX_SWAPS = [
+    [/قصة/g,"story"],[/سؤال/g,"question"],[/حكاية/g,"story"],[/فكرة/g,"idea"],
+    [/حابب/g,"wanna"],[/عايز/g,"wanna"],[/تفاصيل/g,"details"],[/صراحة/g,"honestly"],
+    [/فضول/g,"curious"],[/انطباع/g,"vibe"],[/التفاصيل/g,"the details"]
+  ];
+  function mixify(text){
+    var out = text;
+    MIX_SWAPS.forEach(function(pair){ if(Math.random() < 0.5) out = out.replace(pair[0], pair[1]); });
+    return out;
+  }
+  function uniq(arr){
+    var seen = {}, out = [];
+    arr.forEach(function(s){ if(!seen[s]){ seen[s] = true; out.push(s); } });
+    return out;
+  }
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; }
+    return a;
+  }
+
+  /* ---- reads the actual text/context the user typed and flags what it's about ---- */
+  function extractSignals(){
+    var text = (state.rawMainText||"") + " " + (state.rawContextText||"");
+    var topics = [];
+    Object.keys(TOPIC_PATTERNS).forEach(function(key){
+      if(TOPIC_PATTERNS[key].test(text)) topics.push(key);
+    });
+    var delay = /مردتش|متأخر|رد متأخر|من (يوم|يومين|3 أيام|اسبوع)|ماردتيش|didn'?t reply|late reply|ta2kher/i.test(text);
+    var metRecently = /اتقابلنا|قابلتها|قابلته|met (her|him)|امبارح|النهاردة قابلت/i.test(text);
+    return { topics: topics, delay: delay, metRecently: metRecently };
+  }
+
+  /* ---- builds the candidate pool of lines for one category, driven by the signals above ---- */
+  function composeReplyPool(cat){
+    var authoringLang = (state.lang === "franco") ? "franco" : "masri";
+    var built = [];
+    if(state.signals.delay) built = built.concat((SITUATION_DELAY[cat]||{})[authoringLang] || []);
+    if(state.signals.metRecently) built = built.concat((SITUATION_MET[cat]||{})[authoringLang] || []);
+    state.signals.topics.forEach(function(t){
+      var hooks = (TOPIC_HOOKS[t]||{})[authoringLang] || [];
+      var tails = (CATEGORY_TAILS[cat]||{})[authoringLang] || [];
+      hooks.forEach(function(h){ tails.forEach(function(tail){ built.push(h + tail); }); });
+    });
+    if(state.lang === "mix") built = built.map(mixify);
+    var generic = (GENERIC_FULL[state.lang]||GENERIC_FULL.masri)[cat] || [];
+    return uniq(built.concat(generic));
+  }
+
+  var FILLERS = ["بصراحة، ","يعني، ","طب، ","حقيقي، ","والله، "];
+  function stripEmoji(t){ return t.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,"").replace(/\s+/g," ").trim(); }
+  function emojisEnabled(){ return $("emojiToggle") ? $("emojiToggle").classList.contains("on") : true; }
+  function humanize(text){
+    var out = text;
+    if(Math.random() < 0.22){
+      out = FILLERS[Math.floor(Math.random()*FILLERS.length)] + out;
+    }
+    if(!emojisEnabled()) out = stripEmoji(out);
+    return out.trim();
+  }
+
+  function pickInsight(){
+    var s = state.signals;
+    if(s.delay) return "لاحظت إن في تأخير في الرد من الطرف التاني — الأفضل ترد بخفة من غير ما تظهر متضايق أو مستعجل.";
+    if(s.metRecently) return "بما إنكم اتقابلتوا فعلاً، الأنسب تشير للحظة حقيقية حصلت مش كلام عام.";
+    if(s.topics.length){
+      var map = {
+        travel:"في اللي بعتّه إشارة للسفر — دي نقطة كويسة تفتح بيها بدل أي مجاملة عامة.",
+        coffee:"ذكر القهوة نقطة بسيطة تقدر تبني عليها سؤال طبيعي.",
+        food:"موضوع الأكل ممكن يفتح كلام خفيف وطبيعي من غير مجهود.",
+        gym:"إشارة الرياضة/الجيم فرصة كويسة لسؤال شخصي بدل كلام عام.",
+        work:"في تلميح للشغل، ممكن تستخدمه كمدخل بدل سؤال 'بتشتغل/ي إيه' المباشر.",
+        pets:"ذكر الحيوانات نقطة لطيفة تفتح بيها كلام خفيف.",
+        music:"الموسيقى نقطة تقدر تسأل بيها سؤال حقيقي بدل كلام عام.",
+        art:"إشارة للفن/الرسم فرصة لسؤال أعمق شوية من الكلام العادي."
+      };
+      return map[s.topics[0]] || GENERIC_INSIGHTS[Math.floor(Math.random()*GENERIC_INSIGHTS.length)];
+    }
+    return GENERIC_INSIGHTS[Math.floor(Math.random()*GENERIC_INSIGHTS.length)];
+  }
+
+  var CATEGORY_META = {
+    flirty:{ label:"🌹 فلرت", desc:"مرح وواثق، فيه غنج خفيف من غير ما يوصل لحاجة محرجة أو زيادة عن اللازم." },
+    sophisticated:{ label:"🥂 شخصية جذابة", desc:"واثق وذكي وناضج، بيحس التاني إنه بيتكلم مع حد فاهم نفسه." },
+    respectable:{ label:"🤍 محترم", desc:"دافئ وطبيعي ومحترم، مناسب جدًا لأول رسالة أو لو مش عايز تبان مستعجل." }
+  };
+
+  var GENERIC_INSIGHTS = [
+    "الكلام فيه روح خفيفة ومرح، تقدر تفتح بفلتة بسيطة من غير ما تكون مبالغ فيها.",
+    "أحسن فتحة هي اللي مبنية على تفصيلة حقيقية شفتها، مش مجاملة عامة بتتقال لأي حد.",
+    "لو مش لاقي تفصيلة واضحة تتكلم عنها، سؤال خفيف بيفتح كلام أحسن من جملة طويلة."
+  ];
+
+  var UNSAFE_MESSAGE = "الصورة اللي رفعتها فيها محتوى للبالغين، وRadd مبيقدرش يحللها أو يبني عليها ردود.";
+
+  /* ============ STATE ============ */
+  var state = {
+    lang: "masri",
+    activeCat: "flirty",
+    uploadedName: null,
+    uploadedDataUrl: null,
+    generated: {}, // cat -> array of {text, variantIndex}
+    theme: "dark",
+    rawMainText: "",
+    rawContextText: "",
+    signals: { topics:[], delay:false, metRecently:false },
+    history: [] // past conversations, newest first
+  };
+
+  /* ============ HELPERS ============ */
+  function $(id){ return document.getElementById(id); }
+  function qsa(sel, root){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
+
+  function showView(id){
+    qsa(".view").forEach(function(v){ v.classList.remove("active"); });
+    $(id).classList.add("active");
+    window.scrollTo(0, 0);
+    closeSidebarMobile();
+  }
+
+  function closeSidebarMobile(){
+    $("sidebar").classList.remove("open");
+    $("sidebarBackdrop").classList.remove("show");
+  }
+
+  /* ============ SIDEBAR NAV ============ */
+  qsa("[data-nav]").forEach(function(el){
+    el.addEventListener("click", function(){
+      var target = el.getAttribute("data-nav");
+      if(target === "home"){ resetHome(); showView("view-home"); }
+      if(target === "settings"){ showView("view-settings"); }
+      qsa(".nav-item").forEach(function(n){ n.classList.remove("active"); });
+    });
+  });
+
+  $("hamburgerBtn").addEventListener("click", function(){
+    $("sidebar").classList.add("open");
+    $("sidebarBackdrop").classList.add("show");
+  });
+  $("sidebarBackdrop").addEventListener("click", closeSidebarMobile);
+  $("sidebarCloseBtn").addEventListener("click", closeSidebarMobile);
+
+  function makeCollapsible(btnId, panelId){
+    var btn = $(btnId), panel = $(panelId);
+    btn.addEventListener("click", function(){
+      btn.classList.toggle("open");
+      panel.classList.toggle("open");
+    });
+  }
+  makeCollapsible("myConvBtn","myConvList");
+  makeCollapsible("savedBtn","savedList");
+  makeCollapsible("learningBtn","learningSub");
+
+  qsa(".nav-sub-item").forEach(function(item){
+    item.addEventListener("click", function(){
+      openLesson(item.getAttribute("data-lesson"));
+    });
+  });
+
+  /* ============ LANGUAGE SWITCH ============ */
+  qsa(".lang-pill").forEach(function(p){
+    p.addEventListener("click", function(){
+      qsa(".lang-pill").forEach(function(x){ x.classList.remove("active"); });
+      p.classList.add("active");
+      state.lang = p.getAttribute("data-lang");
+      $("settingsLangLabel").textContent = p.textContent;
+    });
+  });
+
+  /* ============ UPLOAD ============ */
+  var uploadBox = $("uploadBox");
+  var fileInput = $("fileInput");
+  var mainInput = $("mainInput");
+  var submitBtn = $("submitBtn");
+
+  $("imgBtn").addEventListener("click", function(){ fileInput.click(); });
+
+  fileInput.addEventListener("change", function(e){
+    if(e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+  });
+
+  ["dragover"].forEach(function(evt){
+    uploadBox.addEventListener(evt, function(e){ e.preventDefault(); uploadBox.classList.add("drag-over"); });
+  });
+  ["dragleave","drop"].forEach(function(evt){
+    uploadBox.addEventListener(evt, function(e){ uploadBox.classList.remove("drag-over"); });
+  });
+  uploadBox.addEventListener("drop", function(e){
+    e.preventDefault();
+    if(e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  document.addEventListener("paste", function(e){
+    if(!$("view-home").classList.contains("active")) return;
+    var items = (e.clipboardData || {}).items || [];
+    for(var i=0;i<items.length;i++){
+      if(items[i].type.indexOf("image") === 0){
+        var file = items[i].getAsFile();
+        if(file) handleFile(file);
+      }
+    }
+  });
+
+  function handleFile(file){
+    state.uploadedName = file.name || "screenshot.png";
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      state.uploadedDataUrl = ev.target.result;
+      $("uploadPreviewImg").src = state.uploadedDataUrl;
+      $("uploadPreviewName").textContent = state.uploadedName;
+      $("uploadPreview").classList.add("show");
+      uploadBox.classList.add("has-content");
+      updateSubmitState();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  $("removeUpload").addEventListener("click", function(){
+    state.uploadedName = null; state.uploadedDataUrl = null;
+    fileInput.value = "";
+    $("uploadPreview").classList.remove("show");
+    uploadBox.classList.remove("has-content");
+    updateSubmitState();
+  });
+
+  mainInput.addEventListener("input", function(){
+    mainInput.style.height = "auto";
+    mainInput.style.height = Math.min(mainInput.scrollHeight, 120) + "px";
+    updateSubmitState();
+  });
+
+  function updateSubmitState(){
+    submitBtn.disabled = !(mainInput.value.trim().length > 0 || state.uploadedDataUrl);
+  }
+
+  function resetHome(){
+    mainInput.value = ""; mainInput.style.height = "auto";
+    $("contextField").value = "";
+    state.uploadedName = null; state.uploadedDataUrl = null;
+    $("uploadPreview").classList.remove("show");
+    uploadBox.classList.remove("has-content");
+    fileInput.value = "";
+    updateSubmitState();
+  }
+
+  var forceUnsafeDemo = false;
+  $("demoUnsafeLink").addEventListener("click", function(){
+    forceUnsafeDemo = true;
+    mainInput.value = "سكرين شات تجريبي (مثال لمحتوى ممنوع)";
+    updateSubmitState();
+    submitBtn.click();
+  });
+
+  /* ============ LOADING ============ */
+  var LOADING_MESSAGES = ["بنقرا الموقف...", "بندور على أحسن زاوية...", "بنخلّيه يحس طبيعي...", "خلصنا خلاص..."];
+  function runLoading(cb){
+    var overlay = $("loadingOverlay"), text = $("loadingText");
+    var i = 0;
+    text.textContent = LOADING_MESSAGES[0];
+    overlay.classList.add("show");
+    var interval = setInterval(function(){
+      i = (i+1) % LOADING_MESSAGES.length;
+      text.textContent = LOADING_MESSAGES[i];
+    }, 480);
+    setTimeout(function(){
+      clearInterval(interval);
+      overlay.classList.remove("show");
+      cb();
+    }, 1900);
+  }
+
+  /* ============ SUBMIT → RESULTS ============ */
+  submitBtn.addEventListener("click", function(){
+    if(submitBtn.disabled) return;
+    var isUnsafe = forceUnsafeDemo;
+    forceUnsafeDemo = false;
+    runLoading(function(){
+      if(isUnsafe){
+        showView("view-blocked");
+        return;
+      }
+      buildResults();
+      showView("view-results");
+    });
+  });
+
+  function buildResults(){
+    // read what the user actually typed, and figure out what it's about
+    state.rawMainText = mainInput.value.trim();
+    state.rawContextText = $("contextField").value.trim();
+    state.signals = extractSignals();
+
+    // thumbnail
+    var thumb = $("resultsThumb");
+    if(state.uploadedDataUrl){
+      thumb.classList.remove("placeholder");
+      thumb.innerHTML = '<img src="'+state.uploadedDataUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:13px;">';
+      $("resultsSource").textContent = "بناءً على الصورة اللي رفعتها: " + (state.uploadedName || "");
+    } else {
+      thumb.classList.add("placeholder");
+      thumb.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+      $("resultsSource").textContent = "بناءً على الكلام اللي كتبته";
+    }
+    $("insightText").textContent = pickInsight();
+
+    // seed generated pools per category, built from the detected signals
+    state.generated = {};
+    ["flirty","sophisticated","respectable"].forEach(function(cat){
+      var pool = shuffle(getPool(cat));
+      state.generated[cat] = pool.slice(0,4).map(function(t){ return { text: humanize(t) }; });
+    });
+    state.activeCat = "flirty";
+    renderTabs();
+    renderCards();
+    saveToHistory();
+  }
+
+  function getPool(cat){
+    return composeReplyPool(cat);
+  }
+
+  function saveToHistory(){
+    var label = state.rawMainText ? state.rawMainText.slice(0,34) : (state.uploadedName ? "صورة: " + state.uploadedName : "محادثة بدون نص");
+    var entry = {
+      label: label,
+      sourceLabel: $("resultsSource").textContent,
+      insight: $("insightText").textContent,
+      uploadedDataUrl: state.uploadedDataUrl,
+      uploadedName: state.uploadedName,
+      generated: JSON.parse(JSON.stringify(state.generated))
+    };
+    state.history.unshift(entry);
+    if(state.history.length > 15) state.history.length = 15;
+    renderHistoryList();
+  }
+
+  function renderHistoryList(){
+    var list = $("myConvList");
+    if(!list) return;
+    if(!state.history.length){
+      list.innerHTML = '<div class="conv-list-item" style="cursor:default;">هنا هتلاقي آخر المحادثات بعد أول رد تطلبه</div>';
+      return;
+    }
+    list.innerHTML = state.history.map(function(h, idx){
+      return '<div class="conv-list-item" data-hist="'+idx+'">'+escapeHtml(h.label)+'</div>';
+    }).join("");
+    qsa("[data-hist]", list).forEach(function(el){
+      el.addEventListener("click", function(){
+        loadHistory(parseInt(el.getAttribute("data-hist"), 10));
+      });
+    });
+  }
+
+  function loadHistory(idx){
+    var h = state.history[idx];
+    if(!h) return;
+    state.generated = JSON.parse(JSON.stringify(h.generated));
+    state.activeCat = "flirty";
+    var thumb = $("resultsThumb");
+    if(h.uploadedDataUrl){
+      thumb.classList.remove("placeholder");
+      thumb.innerHTML = '<img src="'+h.uploadedDataUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:13px;">';
+    } else {
+      thumb.classList.add("placeholder");
+      thumb.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+    }
+    $("resultsSource").textContent = h.sourceLabel;
+    $("insightText").textContent = h.insight;
+    renderTabs();
+    renderCards();
+    showView("view-results");
+  }
+
+  function renderTabs(){
+    qsa(".tab").forEach(function(t){
+      t.classList.toggle("active", t.getAttribute("data-cat") === state.activeCat);
+    });
+    $("tabDesc").textContent = CATEGORY_META[state.activeCat].desc;
+  }
+
+  qsa(".tab").forEach(function(t){
+    t.addEventListener("click", function(){
+      state.activeCat = t.getAttribute("data-cat");
+      renderTabs();
+      renderCards();
+    });
+  });
+
+  /* ---- card text transforms (simulated "AI" edits) ---- */
+  var EGYPTIAN_BOOSTERS = [" والله 😂"," يا عم 😌"," بجد كده"," صدقيني"];
+  function transformText(text, action){
+    switch(action){
+      case "shorter":
+        var cut = text.split(/[،.,؟!]/)[0];
+        return cut.length > 6 ? cut.trim() : text;
+      case "no_emoji":
+        return text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "").trim();
+      case "funnier":
+        return text.replace(/😂|😏|😌/g, "") + " 😂😂";
+      case "more_flirty":
+        return text + " 😏";
+      case "less_flirty":
+        return text.replace(/😏|😌/g, "").trim();
+      case "more_confident":
+        return text.replace(/^(طب |يا ترى )/,"");
+      case "more_casual":
+        return text.replace(/إنتِ/g,"إنتي");
+      case "more_egyptian":
+        return text + EGYPTIAN_BOOSTERS[Math.floor(Math.random()*EGYPTIAN_BOOSTERS.length)];
+      case "franco":
+        var langBefore = state.lang;
+        state.lang = "franco";
+        var poolF = composeReplyPool(state.activeCat);
+        state.lang = langBefore;
+        return poolF.length ? poolF[Math.floor(Math.random()*poolF.length)] : text;
+      default:
+        return text;
+    }
+  }
+
+  var CHIP_ACTIONS = [
+    {key:"more_flirty", label:"أكتر فلرت"},
+    {key:"less_flirty", label:"أقل فلرت"},
+    {key:"more_confident", label:"أكتر ثقة"},
+    {key:"more_casual", label:"أكتر عفوية"},
+    {key:"funnier", label:"أضحك"},
+    {key:"shorter", label:"أقصر"},
+    {key:"no_emoji", label:"من غير إيموجي"},
+    {key:"more_egyptian", label:"مصري أكتر"},
+    {key:"franco", label:"Franco"}
+  ];
+
+  function renderCards(){
+    var grid = $("cardsGrid");
+    grid.innerHTML = "";
+    var items = state.generated[state.activeCat];
+    items.forEach(function(item, idx){
+      var card = document.createElement("div");
+      card.className = "reply-card";
+      card.innerHTML =
+        '<div class="reply-text">'+ escapeHtml(item.text) +'</div>'+
+        '<div class="reply-actions">'+
+          '<button class="pill-btn copy-btn">'+iconCopy()+'نسخ</button>'+
+          '<button class="pill-btn regen-btn">'+iconDice()+'واحدة تانية</button>'+
+          '<button class="pill-btn chip-toggle-btn chip-toggle">'+iconSliders()+'تعديل</button>'+
+        '</div>'+
+        '<div class="chips-row"></div>';
+
+      // copy
+      card.querySelector(".copy-btn").addEventListener("click", function(e){
+        var btn = e.currentTarget;
+        navigator.clipboard && navigator.clipboard.writeText(item.text).catch(function(){});
+        btn.classList.add("copied");
+        var original = btn.innerHTML;
+        btn.innerHTML = iconCheck() + "اتنسخ";
+        setTimeout(function(){ btn.classList.remove("copied"); btn.innerHTML = original; }, 1400);
+      });
+
+      // regenerate
+      card.querySelector(".regen-btn").addEventListener("click", function(){
+        var pool = shuffle(getPool(state.activeCat));
+        var otherTexts = items.map(function(o){ return o.text; });
+        var next = pool.filter(function(p){ return otherTexts.indexOf(p) === -1; })[0] || pool[0];
+        item.text = humanize(next || item.text);
+        renderCards();
+      });
+
+      // chips toggle
+      var chipsRow = card.querySelector(".chips-row");
+      CHIP_ACTIONS.forEach(function(a){
+        var chip = document.createElement("button");
+        chip.className = "chip";
+        chip.textContent = a.label;
+        chip.addEventListener("click", function(){
+          item.text = transformText(item.text, a.key);
+          renderCards();
+        });
+        chipsRow.appendChild(chip);
+      });
+      card.querySelector(".chip-toggle-btn").addEventListener("click", function(){
+        chipsRow.classList.toggle("open");
+      });
+
+      grid.appendChild(card);
+    });
+  }
+
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function iconCopy(){ return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'; }
+  function iconDice(){ return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>'; }
+  function iconSliders(){ return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>'; }
+  function iconCheck(){ return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>'; }
+
+  /* ============ LEARNING SKILLS ============ */
+  var LESSONS = {
+    listening:{
+      eyebrow:"مهارة 1 من 4",
+      title:"الاستماع الفعّال",
+      meta:"درس 3 دقائق",
+      principle:"الاستماع الفعّال مش إنك ساكت وبتستنى دورك تتكلم. هو إنك فعلاً بتتابع اللي قدامك بيقوله، وبترد عليه بطريقة تبين إنك سمعته.",
+      points:[
+        "اسأل سؤال متابعة عن حاجة هي/هو قالها قبل ما تفتح موضوع جديد",
+        "احتفظ بتفاصيل صغيرة (اسم صاحبتها، رحلة، شغلانة) وارجعلها بعدين",
+        "متحولش كل حكاية لحكاية عنك إنت",
+        "رد بكلمة أو جملة تأكيد إنك فاهم الموضوع",
+        "لاحظ الحالة المزاجية اللي بتتكلم بيها مش بس الكلمات"
+      ],
+      bad:"أنا كمان بحب السفر أوي، آخر مرة رحت الساحل كان جامد جدًا وقابلت ناس...",
+      good:"إيه اللي خلاكي تحبي إسطنبول بالذات؟ في حاجة معينة شدّتك؟",
+      egyptian:"طب واللي حصل بعد كده؟ عايز أعرف كمّلتي إزاي",
+      franco:"tab we ba3dein eh elly 7asal? 3ayez a3raf kamalty ezay",
+      challenge:"في المحادثة الجاية، اسأل سؤالين متابعة حقيقيين قبل ما تفتح موضوع جديد."
+    },
+    confidence:{
+      eyebrow:"مهارة 2 من 4",
+      title:"الثقة في الكلام",
+      meta:"درس 3 دقائق",
+      principle:"الثقة مش غرور. هي إنك تقدر تعبّر عن رأيك أو اهتمامك من غير اعتذار زيادة، ومن غير ما تستنى موافقة الطرف التاني على كل كلمة.",
+      points:[
+        "متعتذرش على حاجة مش غلط، زي إنك بعتّ رسالة الأول",
+        "قول رأيك بوضوح بدل ما تدور حواليه",
+        "متطاردش رد أو تأكيد، ابعت وسيبها",
+        "اقبل الرفض بهدوء، مش كل حد هيتفاعل وده طبيعي",
+        "متشرحش نفسك أكتر من اللازم"
+      ],
+      bad:"معلش لو مزعجك إني باعتلك، بس حبيت أسأل لو مش مشكلة...",
+      good:"حابب أعرفك أكتر، إيه رأيك نتكلم؟",
+      egyptian:"مش هقعد أفكر كتير، حابب أعرفك أكتر وخلاص",
+      franco:"msh ha23od afaker keteer, 7abeit a3rafek aktar w khalas",
+      challenge:"ابعت رسالة النهاردة من غير أي جملة اعتذار فيها."
+    },
+    cues:{
+      eyebrow:"مهارة 3 من 4",
+      title:"قراءة الإشارات",
+      meta:"درس 4 دقائق",
+      principle:"مش كل حد هيقولك مهتم أو لأ بشكل مباشر. لكن في إشارات بتساعدك تفهم الموقف — والأهم إنك تحترم أي إشارة واضحة إن حد مش عايز يكمل.",
+      points:[
+        "الردود الطويلة والأسئلة الرجعالك = تفاعل حقيقي",
+        "الردود بكلمة واحدة أو بعد وقت طويل = يمكن مش مهتم أو مشغول، مفيش داعي تفسر أكتر من اللازم",
+        "الهزار المتبادل حاجة كويسة، بس لو حسيت إن في تحفظ رجعلك، ارجع خطوة",
+        "أي إشارة واضحة إن الشخص عايز يوقف الكلام لازم تتحترم فورًا",
+        "متحاولش 'تفك' كل صمت أو رد بارد — ساعات ده مش ليك"
+      ],
+      bad:"ليه مبتردش بسرعة كده؟ عملت حاجة غلط؟",
+      good:"حسيت إنك مشغولة شوية، خد وقتك براحتك 🙂",
+      egyptian:"مفيش أي ضغط، رد لما يكون عندك وقت",
+      franco:"mafeesh ay dagt, radd lama yeb2a 3andek wa2t",
+      challenge:"في محادثتك الجاية، لاحظ فرق طول الردود بتاعتك عن ردود الطرف التاني."
+    },
+    questions:{
+      eyebrow:"مهارة 4 من 4",
+      title:"أسئلة أذكى",
+      meta:"درس 3 دقائق",
+      principle:"سؤال 'بتشتغلي إيه؟' بيخلي المحادثة تحس زي مقابلة شغل. الأسئلة الكويسة مبنية على حاجة شفتها فعلاً، مش سؤال عام بتسأله لأي حد.",
+      points:[
+        "اربط سؤالك بحاجة موجودة في البروفايل أو الصورة أو الكلام اللي قبله",
+        "اسأل سؤال بيفتح حكاية مش سؤال بيتجاوب بكلمة واحدة",
+        "خلي السؤال فيه لمسة خفة من غير ما يبقى مجهود زيادة",
+        "استخدم اللي انت شايفه كمدخل بدل السؤال المباشر"
+      ],
+      bad:"بتشتغلي إيه؟",
+      good:"شكلك مبسوطة بجد في شغلك من الصور دي، بتعملي إيه بالظبط؟",
+      egyptian:"الصورة دي شكلها من شغل، إيه الحكاية؟",
+      franco:"el soora dee shakelha men shoghl, eh el 7ekaya?",
+      challenge:"المرة الجاية، اسأل سؤال مبني على حاجة شايفها فعلًا في البروفايل بدل سؤال عام."
+    }
+  };
+
+  function openLesson(key){
+    var L = LESSONS[key];
+    if(!L) return;
+    var html =
+      '<div class="lesson-eyebrow">'+L.eyebrow+'</div>'+
+      '<h1 class="lesson-title">'+L.title+'</h1>'+
+      '<div class="lesson-meta">'+L.meta+'</div>'+
+      '<div class="lesson-block"><h3>الفكرة الأساسية</h3><p>'+L.principle+'</p></div>'+
+      '<div class="lesson-block"><h3>النقط المهمة</h3><ul>'+L.points.map(function(p){return '<li>'+p+'</li>';}).join("")+'</ul></div>'+
+      '<div class="lesson-block"><h3>مثال</h3><div class="example-pair">'+
+        '<div class="example-line bad"><span class="example-tag">أضعف</span><span>'+L.bad+'</span></div>'+
+        '<div class="example-line good"><span class="example-tag">أحسن</span><span>'+L.good+'</span></div>'+
+      '</div></div>'+
+      '<div class="lesson-block"><h3>بالمصري وبالفرانكو</h3>'+
+        '<div class="lang-example"><div class="lbl">مصري</div>'+L.egyptian+'</div>'+
+        '<div class="lang-example"><div class="lbl">Franco</div>'+L.franco+'</div>'+
+      '</div>'+
+      '<div class="lesson-block"><h3>تحدي عملي</h3><div class="challenge-box">'+L.challenge+'</div></div>'+
+      '<button class="practice-btn" id="startPracticeBtn">'+
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>'+
+        'اتمرن مع الذكاء الاصطناعي'+
+      '</button>';
+    $("lessonContent").innerHTML = html;
+    $("startPracticeBtn").addEventListener("click", function(){ openPractice(key); });
+    showView("view-lesson");
+  }
+
+  var PRACTICE_SCENARIOS = {
+    listening:"تخيل إنك في محادثة، وهي قالتلك: \"النهاردة كان يوم تعبان جدًا في الشغل، بس خلصت مشروع كنت مستنياه بقالي أسبوعين.\" اكتب ردك.",
+    confidence:"بعتّلها رسالة من يومين ومردتش لسه. صاحبك بيقولك ابعتلها تاني وتعتذر إنك بتضايقها. اكتب رسالة متابعة من غير اعتذار زيادة.",
+    cues:"بعتّلها 3 رسايل وهي بترد بكلمة واحدة كل مرة، من غير أي سؤال يرجعلك. اكتب إيه اللي هتقوله أو تعمله دلوقتي.",
+    questions:"شايف في بروفايلها صورة وهي بتطبخ في مطبخ شكله بيتها. اكتب سؤال أول رسالة مبني على الصورة دي."
+  };
+
+  function openPractice(key){
+    $("practiceScenario").textContent = PRACTICE_SCENARIOS[key] || PRACTICE_SCENARIOS.listening;
+    $("practiceInput").value = "";
+    $("practiceFeedback").classList.remove("show");
+    $("practiceSubmit").onclick = function(){ evaluatePractice(key); };
+    showView("view-practice");
+  }
+
+  function evaluatePractice(key){
+    var text = $("practiceInput").value.trim();
+    if(!text) return;
+    var len = text.length;
+    var hasQuestion = /[؟?]/.test(text);
+    var hasApology = /(معلش|آسف|اعذرني|sorry)/.test(text);
+    var hasEmoji = /[\u{1F300}-\u{1FAFF}]/u.test(text);
+
+    var scores = { listening:55, confidence:55, natural:65, respect:80 };
+    if(hasQuestion) scores.listening += 25;
+    if(len > 15 && len < 160) scores.natural += 15; else scores.natural -= 10;
+    if(hasApology) scores.confidence -= 25; else scores.confidence += 15;
+    if(hasEmoji) scores.natural += 5;
+    if(len < 6) { scores.listening -= 20; scores.natural -= 15; }
+
+    Object.keys(scores).forEach(function(k){ scores[k] = Math.max(10, Math.min(96, scores[k])); });
+
+    setFeedbackBar("fbListening", scores.listening, hasQuestion ? "سؤال متابعة كويس" : "جرّب سؤال متابعة");
+    setFeedbackBar("fbConfidence", scores.confidence, hasApology ? "قلل الاعتذار الزيادة" : "واضح ومباشر");
+    setFeedbackBar("fbNatural", scores.natural, len < 6 ? "قصير جدًا" : "حسّه طبيعي");
+    setFeedbackBar("fbRespect", scores.respect, "محترم ومناسب للموقف");
+
+    $("practiceFeedback").classList.add("show");
+  }
+
+  function setFeedbackBar(id, val, note){
+    $(id).style.width = val + "%";
+    $(id + "Note").textContent = note;
+  }
+
+  /* ============ SETTINGS ============ */
+  function bindToggle(id){
+    var t = $(id);
+    t.addEventListener("click", function(){ t.classList.toggle("on"); });
+  }
+  bindToggle("autosaveToggle");
+  bindToggle("emojiToggle");
+  $("themeToggle").addEventListener("click", function(){
+    var t = $("themeToggle");
+    t.classList.toggle("on");
+    state.theme = t.classList.contains("on") ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", state.theme);
+  });
+
+  /* ============ INIT ============ */
+  updateSubmitState();
+  renderHistoryList();
+})();
+</script>
+</body>
+</html>
